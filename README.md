@@ -19,7 +19,7 @@ repo. Desinstalar = `rm -rf ~/.teambrain`.
 ## Instalación (cada dev, ~2 minutos)
 
 ```bash
-gh repo clone aiuda/teambrain ~/.teambrain/repo
+gh repo clone aiudalabs/teambrain ~/.teambrain/repo
 bash ~/.teambrain/repo/setup.sh
 ```
 
