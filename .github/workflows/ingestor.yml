@@ -1,0 +1,76 @@
+# teambrain/.github/workflows/ingestor.yml
+# Corre EN teambrain cuando llegan digests nuevos a raw/. Ejecuta el prompt del
+# Bibliotecario y abre un PR a wiki/ — nunca escribe directo a main.
+#
+# v0: TODO PR de conocimiento requiere aprobación humana (branch protection en
+# main). El gate determinístico de auto-merge para bajo impacto llega después —
+# arrancar revisándolo todo es el default seguro y además calibra el prompt.
+
+name: ingestor
+on:
+  push:
+    branches: [main]
+    paths: ['raw/**']
+
+concurrency:
+  group: ingestor          # serializa: nunca dos ingestas compitiendo por la wiki
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  ingerir:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Detectar digests nuevos
+        id: nuevos
+        run: |
+          git diff --name-only HEAD~1 HEAD -- 'raw/**' | grep '\.md$' > nuevos.txt || true
+          [ -s nuevos.txt ] || { echo "skip=true" >> "$GITHUB_ENV"; exit 0; }
+          echo "Digests nuevos:"; cat nuevos.txt
+
+      - name: Ejecutar al Bibliotecario (Copilot CLI)
+        if: env.skip != 'true'
+        env:
+          # ⚠ VERIFICAR nombre de variable con: copilot help environment
+          GH_TOKEN: ${{ secrets.COPILOT_CLI_TOKEN }}
+        run: |
+          npm install -g @github/copilot >/dev/null 2>&1
+          {
+            cat .teambrain/prompts/ingestor.md
+            echo; echo "## DIGESTS NUEVOS A PROCESAR"
+            while read -r f; do echo; echo "### $f"; cat "$f"; done < nuevos.txt
+          } > full-prompt.txt
+          # El agente trabaja sobre el checkout: puede leer toda la wiki y
+          # editar archivos. Herramientas acotadas: shell de solo-lectura + write.
+          copilot -p "$(cat full-prompt.txt)" \
+            --allow-tool write \
+            --allow-tool 'shell(cat,ls,grep,find,head,tail)' \
+            -s | tee salida-agente.md
+
+      - name: Abrir PR de conocimiento
+        if: env.skip != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git config user.name "teambrain[bot]"
+          git config user.email "teambrain[bot]@users.noreply.github.com"
+          # Solo cambios en wiki/ e index.md — cualquier intento sobre raw/ se descarta
+          git checkout -- raw/ 2>/dev/null || true
+          git add wiki/ index.md log.md 2>/dev/null || true
+          git diff --cached --quiet && { echo "El Bibliotecario no propuso cambios (descartes válidos)"; exit 0; }
+          BR="ingest/$(date -u +%Y%m%d-%H%M%S)"
+          git checkout -b "$BR"
+          git commit -m "ingest: $(wc -l < nuevos.txt | tr -d ' ') digest(s)"
+          git push -u origin "$BR"
+          gh pr create --base main --head "$BR" \
+            --title "🧠 Conocimiento nuevo: $(date -u +%F)" \
+            --body-file salida-agente.md \
+            --label conocimiento
