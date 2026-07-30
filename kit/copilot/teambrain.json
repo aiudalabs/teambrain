@@ -11,8 +11,8 @@
     "sessionEnd": [
       {
         "name": "teambrain-digest",
-        "bash": "[ -x \"$HOME/.teambrain/bin/teambrain-digest.sh\" ] && \"$HOME/.teambrain/bin/teambrain-digest.sh\" || true",
-        "powershell": "if (Test-Path \"$env:USERPROFILE\\.teambrain\\bin\\teambrain-digest.sh\") { bash \"$env:USERPROFILE/.teambrain/bin/teambrain-digest.sh\" }"
+        "bash": "D=\"$HOME/.teambrain/repo/kit/bin/teambrain-digest.sh\"; [ -f \"$D\" ] || D=\"$HOME/.teambrain/bin/teambrain-digest.sh\"; [ -f \"$D\" ] && bash \"$D\" || true",
+        "powershell": "$d = \"$env:USERPROFILE/.teambrain/repo/kit/bin/teambrain-digest.sh\"; if (-not (Test-Path $d)) { $d = \"$env:USERPROFILE/.teambrain/bin/teambrain-digest.sh\" }; if (Test-Path $d) { bash $d }"
       }
     ]
   }

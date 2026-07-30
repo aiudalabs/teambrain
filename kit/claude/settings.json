@@ -1,5 +1,5 @@
 {
-  "$comment": "Snippet for the repo's .claude/settings.json (or the dev's ~/.claude/settings.json). Same digest engine as Copilot CLI, plus background sync on session start.",
+  "$comment": "Snippet for the repo's .claude/settings.json (or the dev's ~/.claude/settings.json). Background sync on session start + digest on session end. Prefers the repo copy of the engine so it self-updates with each pull.",
   "hooks": {
     "SessionStart": [
       {
@@ -16,7 +16,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "[ -x \"$HOME/.teambrain/bin/teambrain-digest.sh\" ] && \"$HOME/.teambrain/bin/teambrain-digest.sh\" || true"
+            "command": "D=\"$HOME/.teambrain/repo/kit/bin/teambrain-digest.sh\"; [ -f \"$D\" ] || D=\"$HOME/.teambrain/bin/teambrain-digest.sh\"; [ -f \"$D\" ] && bash \"$D\" || true"
           }
         ]
       }
