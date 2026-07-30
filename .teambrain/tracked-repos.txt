@@ -1,0 +1,13 @@
+# TeamBrain — tracked repositories (capture allowlist)
+#
+# DEFAULT-DENY: the digest engine ONLY captures sessions in repos listed here.
+# Any repo not on this list — including confidential projects — is never
+# captured, even though the hooks are installed globally.
+#
+# Enrolling a repo = adding a line here via PR (auditable consent).
+# One repo per line: either the repo name or org/repo. Lines starting with #
+# are ignored. The teambrain repo itself is always tracked.
+#
+# Examples:
+# aiudalabs/project-a
+# project-b

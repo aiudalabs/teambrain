@@ -45,11 +45,29 @@ fi
 
 # ---------- 2. Project git context ----------
 cd "$CWD" 2>/dev/null || exit 0
-REPO_NAME="$(basename "$(git rev-parse --show-toplevel 2>/dev/null || echo "$CWD")")"
+REPO_TOPLEVEL="$(git rev-parse --show-toplevel 2>/dev/null || echo "$CWD")"
+REPO_NAME="$(basename "$REPO_TOPLEVEL")"
 BRANCH="$(git branch --show-current 2>/dev/null || echo '-')"
 DEV="$(git config user.name 2>/dev/null || whoami)"
 DIFFSTAT="$(git diff --stat HEAD 2>/dev/null | tail -5)"
 STAMP="$(date -u +%Y-%m-%d)"; TS="$(date -u +%H%M%S)"
+
+# ---------- 2.5 Confidentiality gate: DEFAULT-DENY allowlist ----------
+# Only repos explicitly enrolled in teambrain/.teambrain/tracked-repos.txt are
+# captured. Confidential projects are never tracked unless added via PR.
+if [ "$REPO_TOPLEVEL" != "$TB_REPO" ]; then
+  ALLOW="$TB_REPO/.teambrain/tracked-repos.txt"
+  REMOTE="$(git remote get-url origin 2>/dev/null | sed -E 's#(git@|https://)([^/:]+)[:/]##; s#\.git$##')"
+  MATCHED=0
+  if [ -f "$ALLOW" ]; then
+    while IFS= read -r line; do
+      line="${line%%#*}"; line="$(printf '%s' "$line" | tr -d '[:space:]')"
+      [ -z "$line" ] && continue
+      if [ "$line" = "$REPO_NAME" ] || [ "$line" = "$REMOTE" ]; then MATCHED=1; break; fi
+    done < "$ALLOW"
+  fi
+  [ "$MATCHED" -eq 1 ] || { log "skip untracked repo=$REPO_NAME"; exit 0; }
+fi
 
 # ---------- 3. Generate the digest ----------
 PROMPT='You just finished a work session in this repository. Summarize ONLY the durable knowledge a teammate should inherit, in markdown, in English:

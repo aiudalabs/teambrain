@@ -17,6 +17,17 @@ The digest goes through automatic secret redaction before leaving your machine.
 Everything sent is readable by you in `~/.teambrain/outbox` and in the repo.
 Uninstall = `rm -rf ~/.teambrain`.
 
+## Confidentiality: default-deny
+
+The hooks are installed globally, but the digest engine captures **only repos
+explicitly enrolled** in `.teambrain/tracked-repos.txt`. Any project not on
+that list — including confidential ones — is never captured: the hook fires,
+sees the repo is untracked, and exits without reading or sending anything.
+Enrolling a repo is a one-line PR to that file, so consent is explicit,
+versioned, and auditable. Remember: everyone with access to this repo can read
+all of `raw/` and `wiki/` — only enroll projects whose knowledge the whole
+team may see.
+
 ## Install (each dev, ~2 minutes)
 
 ```bash
