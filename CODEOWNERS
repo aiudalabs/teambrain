@@ -1,5 +1,11 @@
 # Adjust with the real members of each project
 /wiki/concepts/   @nmlemus
 /CLAUDE.md        @nmlemus
+# Security-critical: the digest engine, agent prompts, workflows and the
+# capture allowlist require owner approval — write access to teambrain must
+# NOT imply the ability to change what runs on teammates' machines.
+/kit/             @nmlemus
+/.teambrain/      @nmlemus
+/.github/         @nmlemus
 # /wiki/projects/project-a/  @dev1 @dev2 @nmlemus
 # /wiki/projects/project-b/  @dev3 @dev4 @dev5

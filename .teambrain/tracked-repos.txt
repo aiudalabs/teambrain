@@ -5,9 +5,11 @@
 # captured, even though the hooks are installed globally.
 #
 # Enrolling a repo = adding a line here via PR (auditable consent).
-# One repo per line: either the repo name or org/repo. Lines starting with #
-# are ignored. The teambrain repo itself is always tracked.
+# ALWAYS use the full org/repo form (e.g. aiudalabs/project-a) — for repos with
+# a remote, only the exact org/repo match counts. Bare names only apply to
+# local repos without a remote. Lines starting with # are ignored. The
+# teambrain repo itself is always tracked.
 #
 # Examples:
 # aiudalabs/project-a
-# project-b
+# aiudalabs/project-b

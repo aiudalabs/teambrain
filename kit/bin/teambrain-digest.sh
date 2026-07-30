@@ -63,7 +63,14 @@ if [ "$REPO_TOPLEVEL" != "$TB_REPO" ]; then
     while IFS= read -r line; do
       line="${line%%#*}"; line="$(printf '%s' "$line" | tr -d '[:space:]')"
       [ -z "$line" ] && continue
-      if [ "$line" = "$REPO_NAME" ] || [ "$line" = "$REMOTE" ]; then MATCHED=1; break; fi
+      # Hardened matching: if the repo has a remote, ONLY the exact org/repo
+      # counts (prevents basename collisions with confidential repos).
+      # Bare-name lines only apply to local repos without a remote.
+      if [ -n "$REMOTE" ]; then
+        [ "$line" = "$REMOTE" ] && { MATCHED=1; break; }
+      else
+        [ "$line" = "$REPO_NAME" ] && { MATCHED=1; break; }
+      fi
     done < "$ALLOW"
   fi
   [ "$MATCHED" -eq 1 ] || { log "skip untracked repo=$REPO_NAME"; exit 0; }
