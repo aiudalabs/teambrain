@@ -1,0 +1,15 @@
+{
+  "$comment": "Snippet para .claude/settings.json del repo (o ~/.claude/settings.json del dev). Mismo motor de digest que Copilot CLI.",
+  "hooks": {
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "[ -x \"$HOME/.teambrain/bin/teambrain-digest.sh\" ] && \"$HOME/.teambrain/bin/teambrain-digest.sh\" || true"
+          }
+        ]
+      }
+    ]
+  }
+}

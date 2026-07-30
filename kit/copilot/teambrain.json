@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "hooks": {
+    "sessionEnd": [
+      {
+        "name": "teambrain-digest",
+        "bash": "[ -x \"$HOME/.teambrain/bin/teambrain-digest.sh\" ] && \"$HOME/.teambrain/bin/teambrain-digest.sh\" || true",
+        "powershell": "if (Test-Path \"$env:USERPROFILE\\.teambrain\\bin\\teambrain-digest.sh\") { bash \"$env:USERPROFILE/.teambrain/bin/teambrain-digest.sh\" }"
+      }
+    ]
+  }
+}
