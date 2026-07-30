@@ -47,7 +47,8 @@ page, and declare it in your PR. Resolving contradictions is human work.
 ### 5. Write within the contract
 - Full frontmatter per CLAUDE.md. `sources` points to the exact paths in `raw/`
   that support each claim — NEVER invent sources or state anything not present
-  in a digest.
+  in a digest. `tags` mirrors `type` (e.g. `tags: [decision]`) so the graph view
+  can color pages by kind.
 - Maximum ~600 words per page. Dense prose, no filler.
 - Every new page links to ≥1 existing page and receives ≥1 inbound link (edit
   the neighboring page to create it).

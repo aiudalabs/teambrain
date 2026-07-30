@@ -8,7 +8,8 @@ synthesis · entity · reference (requires review_by) · contradiction (only the
 
 ## Required frontmatter
 id, type, project, status, confidence, sources (paths into raw/), contributors,
-created, updated, review_by, links
+created, updated, review_by, links, tags (must mirror `type`, e.g. `tags: [playbook]` —
+powers color groups in Obsidian's graph view)
 
 ## Rules
 - raw/ is immutable and append-only. wiki/ is only ever modified via PR.
