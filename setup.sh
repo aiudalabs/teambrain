@@ -64,7 +64,13 @@ if command -v claude >/dev/null; then
     ok "hooks created in ~/.claude/settings.json"
   fi
 fi
-# Copilot CLI: hooks ship inside each repo (.github/hooks/teambrain.json) — nothing to install here.
+# Copilot CLI: user-level hooks → apply to ALL sessions in ANY project
+if command -v copilot >/dev/null; then
+  mkdir -p "$HOME/.copilot/hooks"
+  cp "$KIT_DIR/kit/copilot/teambrain.json" "$HOME/.copilot/hooks/teambrain.json"
+  ok "Copilot CLI user-level hooks installed (~/.copilot/hooks) — all projects covered"
+fi
+# Repo-level hooks (.github/hooks/teambrain.json) remain as harmless belt-and-suspenders.
 
 # ---------- Doctor ----------
 echo ""

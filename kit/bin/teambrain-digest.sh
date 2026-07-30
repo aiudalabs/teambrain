@@ -35,6 +35,14 @@ TRANSCRIPT="$(jqget '.transcript_path')"; [ -z "$TRANSCRIPT" ] && TRANSCRIPT="$(
 # Aborted/timed-out sessions rarely leave reliable learnings
 case "$REASON" in abort|timeout) log "skip reason=$REASON"; exit 0;; esac
 
+# Dedupe guard: user-level AND repo-level hooks can both fire for the same
+# session (Copilot CLI combines hook sources) — process each session once.
+if [ -n "$SESSION_ID" ] && [ "$SESSION_ID" != "doctor-test" ]; then
+  LAST="$TB_HOME/.last-session"
+  [ -f "$LAST" ] && [ "$(cat "$LAST" 2>/dev/null)" = "$SESSION_ID" ] && { log "skip dup session=$SESSION_ID"; exit 0; }
+  printf '%s' "$SESSION_ID" > "$LAST" 2>/dev/null || true
+fi
+
 # ---------- 2. Project git context ----------
 cd "$CWD" 2>/dev/null || exit 0
 REPO_NAME="$(basename "$(git rev-parse --show-toplevel 2>/dev/null || echo "$CWD")")"

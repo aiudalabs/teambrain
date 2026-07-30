@@ -27,9 +27,10 @@ bash ~/.teambrain/repo/setup.sh
 The installer detects which CLIs you have, installs the digest engine, adds the
 Claude Code hook if applicable, and runs a test digest. You'll see ✓ per step.
 
-**Copilot CLI needs nothing extra:** the hook ships committed inside each
-product repo (`.github/hooks/teambrain.json`) and activates when you confirm
-folder trust the first time you open `copilot` there.
+**Copilot CLI is covered globally too:** the installer places user-level hooks
+in `~/.copilot/hooks/`, which apply to all your sessions in any project. Repos
+may also ship `.github/hooks/teambrain.json`; the digest engine dedupes so a
+session is never captured twice.
 
 ## Staying in sync (pull)
 
