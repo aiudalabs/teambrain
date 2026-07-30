@@ -1,0 +1,142 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 470" font-family="ui-sans-serif, system-ui, -apple-system, sans-serif">
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M1 1L9 5L1 9" fill="none" stroke="#8b949e" stroke-width="1.6" stroke-linecap="round"/>
+    </marker>
+  </defs>
+
+  <!-- card -->
+  <rect x="0" y="0" width="880" height="470" rx="14" fill="#0d1117"/>
+  <rect x="0.5" y="0.5" width="879" height="469" rx="14" fill="none" stroke="#30363d"/>
+
+  <text x="30" y="40" fill="#e6edf3" font-size="19" font-weight="700">🧠 TeamBrain — how it works</text>
+  <text x="30" y="62" fill="#8b949e" font-size="12.5">Your agents learn as a team. Capture is default-deny: only enrolled repos are ever tracked.</text>
+
+  <!-- ===== Row 1 ===== -->
+  <!-- agent session -->
+  <g>
+    <rect x="40" y="95" width="180" height="62" rx="9" fill="#161b22" stroke="#30363d"/>
+    <text x="130" y="120" fill="#e6edf3" font-size="13.5" font-weight="600" text-anchor="middle">agent session ends</text>
+    <text x="130" y="140" fill="#8b949e" font-size="11.5" text-anchor="middle">copilot · claude · any project</text>
+  </g>
+
+  <!-- gate -->
+  <g>
+    <rect x="330" y="95" width="180" height="62" rx="9" fill="#161b22" stroke="#E8440A"/>
+    <text x="420" y="118" fill="#e6edf3" font-size="13.5" font-weight="600" text-anchor="middle">🛡 allowlist gate</text>
+    <text x="420" y="138" fill="#8b949e" font-size="11.5" text-anchor="middle">tracked-repos.txt</text>
+    <text x="420" y="86" fill="#f85149" font-size="11" text-anchor="middle" opacity="0">✗ untracked → never captured
+      <animate attributeName="opacity" values="0;0;1;1;0;0" keyTimes="0;0.30;0.34;0.44;0.48;1" dur="10s" repeatCount="indefinite"/>
+    </text>
+  </g>
+
+  <!-- raw -->
+  <g>
+    <rect x="640" y="95" width="200" height="62" rx="9" fill="#161b22" stroke="#30363d"/>
+    <text x="740" y="118" fill="#e6edf3" font-size="13.5" font-weight="600" text-anchor="middle">raw/ · immutable</text>
+    <text x="740" y="138" fill="#8b949e" font-size="11.5" text-anchor="middle">session + merged-PR digests</text>
+  </g>
+
+  <!-- arrows row1 -->
+  <line x1="220" y1="126" x2="326" y2="126" stroke="#8b949e" stroke-width="1.3" marker-end="url(#arr)"/>
+  <line x1="510" y1="126" x2="636" y2="126" stroke="#8b949e" stroke-width="1.3" marker-end="url(#arr)"/>
+  <text x="273" y="116" fill="#8b949e" font-size="10.5" text-anchor="middle">digest</text>
+  <text x="573" y="116" fill="#8b949e" font-size="10.5" text-anchor="middle">push (redacted)</text>
+
+  <!-- ===== Row 2 ===== -->
+  <!-- librarian -->
+  <g>
+    <rect x="640" y="240" width="200" height="62" rx="9" fill="#161b22" stroke="#a371f7"/>
+    <text x="740" y="263" fill="#e6edf3" font-size="13.5" font-weight="600" text-anchor="middle">🤖 Librarian agent</text>
+    <text x="740" y="283" fill="#8b949e" font-size="11.5" text-anchor="middle">search first · compress · never raw/</text>
+  </g>
+
+  <!-- PR -->
+  <g>
+    <rect x="330" y="240" width="180" height="62" rx="9" fill="#161b22" stroke="#30363d"/>
+    <text x="420" y="263" fill="#e6edf3" font-size="13.5" font-weight="600" text-anchor="middle">knowledge PR</text>
+    <text x="420" y="283" fill="#2ea043" font-size="11.5" text-anchor="middle">human review ✓</text>
+  </g>
+
+  <!-- wiki -->
+  <g>
+    <rect x="40" y="240" width="180" height="62" rx="9" fill="#161b22" stroke="#2ea043"/>
+    <text x="130" y="262" fill="#e6edf3" font-size="13.5" font-weight="600" text-anchor="middle">wiki/ knowledge graph</text>
+    <circle cx="95" cy="284" r="4" fill="#E8440A">
+      <animate attributeName="r" values="4;6;4" keyTimes="0;0.5;1" begin="8.6s" dur="1.2s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="130" cy="280" r="4" fill="#2ea043"/>
+    <circle cx="163" cy="286" r="4" fill="#a371f7"/>
+    <line x1="99" y1="284" x2="126" y2="281" stroke="#8b949e" stroke-width="1"/>
+    <line x1="134" y1="281" x2="159" y2="285" stroke="#8b949e" stroke-width="1"/>
+  </g>
+
+  <!-- arrows row1->row2 and row2 -->
+  <line x1="740" y1="157" x2="740" y2="236" stroke="#8b949e" stroke-width="1.3" marker-end="url(#arr)"/>
+  <text x="752" y="200" fill="#8b949e" font-size="10.5">triggers</text>
+  <line x1="640" y1="271" x2="514" y2="271" stroke="#8b949e" stroke-width="1.3" marker-end="url(#arr)"/>
+  <line x1="330" y1="271" x2="224" y2="271" stroke="#8b949e" stroke-width="1.3" marker-end="url(#arr)"/>
+  <text x="577" y="262" fill="#8b949e" font-size="10.5" text-anchor="middle">opens</text>
+  <text x="277" y="262" fill="#8b949e" font-size="10.5" text-anchor="middle">merge</text>
+
+  <!-- return sync: wiki -> session -->
+  <path id="ret" d="M 60 240 C 20 200, 20 190, 55 160" fill="none" stroke="#2ea043" stroke-width="1.3" stroke-dasharray="5 5" marker-end="url(#arr)">
+    <animate attributeName="stroke-dashoffset" values="60;0" dur="2.2s" repeatCount="indefinite"/>
+  </path>
+  <text x="18" y="205" fill="#2ea043" font-size="10.5" transform="rotate(-70 18 205)">sessionStart pull</text>
+
+  <!-- ===== animated dots ===== -->
+  <!-- tracked digest: session -> gate -> raw -->
+  <circle r="5" fill="#2ea043" opacity="0">
+    <animateMotion path="M 130 126 L 420 126 L 740 126" calcMode="linear"
+      keyPoints="0;0;0.48;0.48;1;1" keyTimes="0;0.04;0.14;0.20;0.30;1" dur="10s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" values="0;1;1;1;1;0;0" keyTimes="0;0.05;0.14;0.20;0.29;0.31;1" dur="10s" repeatCount="indefinite"/>
+  </circle>
+  <!-- untracked (confidential): approaches gate, rejected, fades -->
+  <circle r="5" fill="#f85149" opacity="0">
+    <animateMotion path="M 130 126 L 400 126" calcMode="linear"
+      keyPoints="0;0;1;1" keyTimes="0;0.26;0.36;1" dur="10s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" values="0;0;1;1;0;0" keyTimes="0;0.26;0.28;0.42;0.47;1" dur="10s" repeatCount="indefinite"/>
+  </circle>
+  <!-- knowledge: raw -> librarian -> PR -> wiki -->
+  <circle r="5" fill="#a371f7" opacity="0">
+    <animateMotion path="M 740 126 L 740 271 L 420 271 L 130 271" calcMode="linear"
+      keyPoints="0;0;0.35;0.35;0.68;0.68;1;1" keyTimes="0;0.48;0.56;0.62;0.72;0.80;0.88;1" dur="10s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" values="0;0;1;1;0;0" keyTimes="0;0.48;0.50;0.87;0.89;1" dur="10s" repeatCount="indefinite"/>
+  </circle>
+
+  <!-- step caption cycling -->
+  <g font-size="12" text-anchor="middle">
+    <text x="440" y="335" fill="#e6edf3" opacity="0">1 · You close your session — a hook distills only decisions, bugs and learnings
+      <animate attributeName="opacity" values="1;1;0;0;0;0" keyTimes="0;0.24;0.27;0.97;0.99;1" dur="10s" repeatCount="indefinite"/></text>
+    <text x="440" y="335" fill="#e6edf3" opacity="0">2 · Default-deny: untracked (confidential) repos are never captured
+      <animate attributeName="opacity" values="0;0;1;1;0;0" keyTimes="0;0.27;0.29;0.46;0.48;1" dur="10s" repeatCount="indefinite"/></text>
+    <text x="440" y="335" fill="#e6edf3" opacity="0">3 · The Librarian curates raw digests into wiki pages — via PR, never directly
+      <animate attributeName="opacity" values="0;0;1;1;0;0" keyTimes="0;0.48;0.50;0.86;0.88;1" dur="10s" repeatCount="indefinite"/></text>
+    <text x="440" y="335" fill="#e6edf3" opacity="0">4 · Every new session pulls the team's knowledge back to your machine
+      <animate attributeName="opacity" values="0;0;1;1;1;0" keyTimes="0;0.88;0.90;0.97;0.99;1" dur="10s" repeatCount="indefinite"/></text>
+  </g>
+
+  <!-- ===== install strip ===== -->
+  <line x1="30" y1="360" x2="850" y2="360" stroke="#30363d" stroke-width="1"/>
+  <text x="30" y="386" fill="#e6edf3" font-size="13" font-weight="600">Install (once, ~2 min):</text>
+
+  <g font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12">
+    <rect x="30" y="398" width="405" height="34" rx="7" fill="#161b22" stroke="#30363d">
+      <animate attributeName="stroke" values="#E8440A;#E8440A;#30363d;#30363d;#E8440A" keyTimes="0;0.32;0.35;0.97;1" dur="9s" repeatCount="indefinite"/>
+    </rect>
+    <text x="45" y="420" fill="#c9d1d9">$ gh repo clone aiudalabs/teambrain ~/.teambrain/repo</text>
+
+    <rect x="455" y="398" width="255" height="34" rx="7" fill="#161b22" stroke="#30363d">
+      <animate attributeName="stroke" values="#30363d;#30363d;#E8440A;#E8440A;#30363d;#30363d" keyTimes="0;0.35;0.38;0.65;0.68;1" dur="9s" repeatCount="indefinite"/>
+    </rect>
+    <text x="470" y="420" fill="#c9d1d9">$ bash ~/.teambrain/repo/setup.sh</text>
+
+    <rect x="730" y="398" width="120" height="34" rx="7" fill="#161b22" stroke="#30363d">
+      <animate attributeName="stroke" values="#30363d;#30363d;#2ea043;#2ea043;#30363d" keyTimes="0;0.68;0.71;0.97;1" dur="9s" repeatCount="indefinite"/>
+    </rect>
+    <text x="745" y="420" fill="#2ea043">work as usual ✓</text>
+  </g>
+
+  <text x="30" y="455" fill="#8b949e" font-size="11">No transcripts, no code, no prompts leave your machine — digests only, secret-redacted, queued offline. Uninstall: rm -rf ~/.teambrain</text>
+</svg>

@@ -4,6 +4,8 @@ Collective memory for the team. From today on, what each of us learns while
 working with our agent (Copilot CLI, Claude Code, opencode) gets captured and
 becomes available to everyone — without changing how you work.
 
+![How TeamBrain works](docs/how-it-works.svg)
+
 ## What it does (and does NOT do)
 
 **Does:** when you close an agent session, a hook generates a *digest* — only
