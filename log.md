@@ -1,0 +1,2 @@
+# Bitácora de operaciones
+
