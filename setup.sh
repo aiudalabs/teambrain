@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
-# TeamBrain — instalador por dev (2 minutos, una sola vez)
-# Uso:  gh repo clone aiuda/teambrain ~/.teambrain/repo && bash ~/.teambrain/repo/kit/../setup.sh
-#   (o) bash setup.sh   desde el clon del monorepo teambrain
+# TeamBrain — per-dev installer (2 minutes, once)
+# Usage:  gh repo clone aiudalabs/teambrain ~/.teambrain/repo && bash ~/.teambrain/repo/setup.sh
 set -e
 TB_HOME="${TEAMBRAIN_HOME:-$HOME/.teambrain}"
 TB_REPO="$TB_HOME/repo"
@@ -13,69 +12,69 @@ fail(){ printf "${R}  ✗ %s${N}\n" "$1"; FAILED=1; }
 FAILED=0
 
 echo ""
-echo "🧠 TeamBrain — instalación"
-echo "──────────────────────────"
+echo "🧠 TeamBrain — install"
+echo "──────────────────────"
 
-# ---------- Prerequisitos ----------
-command -v git >/dev/null && ok "git" || fail "git no encontrado"
-command -v jq  >/dev/null && ok "jq"  || warn "jq no encontrado (recomendado: brew/apt install jq)"
+# ---------- Prerequisites ----------
+command -v git >/dev/null && ok "git" || fail "git not found"
+command -v jq  >/dev/null && ok "jq"  || warn "jq not found (recommended: brew/apt install jq)"
 if command -v gh >/dev/null && gh auth status >/dev/null 2>&1; then
-  ok "gh autenticado como $(gh api user --jq .login 2>/dev/null)"
+  ok "gh authenticated as $(gh api user --jq .login 2>/dev/null)"
 else
-  fail "gh CLI no autenticado — corre: gh auth login"
+  fail "gh CLI not authenticated — run: gh auth login"
 fi
 
 HARNESS=0
-command -v copilot >/dev/null && { ok "Copilot CLI detectado"; HARNESS=1; }
-command -v claude  >/dev/null && { ok "Claude Code detectado"; HARNESS=1; }
-command -v opencode >/dev/null && { ok "opencode detectado (captura vía protocolo AGENTS.md)"; HARNESS=1; }
-[ "$HARNESS" -eq 0 ] && warn "ningún CLI de agente detectado — el digest usará el marcador estructurado"
+command -v copilot >/dev/null && { ok "Copilot CLI detected"; HARNESS=1; }
+command -v claude  >/dev/null && { ok "Claude Code detected"; HARNESS=1; }
+command -v opencode >/dev/null && { ok "opencode detected (capture via AGENTS.md protocol)"; HARNESS=1; }
+[ "$HARNESS" -eq 0 ] && warn "no agent CLI detected — digests will use the structured marker"
 
 GIT_NAME="$(git config --global user.name || true)"
-[ -n "$GIT_NAME" ] && ok "identidad git: $GIT_NAME" || fail "configura tu identidad: git config --global user.name/email"
+[ -n "$GIT_NAME" ] && ok "git identity: $GIT_NAME" || fail "set your identity: git config --global user.name/email"
 
-[ "$FAILED" -eq 1 ] && { echo ""; echo "Corrige lo marcado con ✗ y vuelve a correr."; exit 1; }
+[ "$FAILED" -eq 1 ] && { echo ""; echo "Fix the items marked ✗ and run again."; exit 1; }
 
-# ---------- Instalar ----------
+# ---------- Install ----------
 mkdir -p "$TB_HOME/bin" "$TB_HOME/outbox"
 cp "$KIT_DIR/kit/bin/teambrain-digest.sh" "$TB_HOME/bin/teambrain-digest.sh"
 chmod +x "$TB_HOME/bin/teambrain-digest.sh"
-ok "motor de digest instalado en ~/.teambrain/bin"
+ok "digest engine installed in ~/.teambrain/bin"
 
 if [ ! -d "$TB_REPO/.git" ]; then
-  gh repo clone "${TEAMBRAIN_ORG:-aiuda}/teambrain" "$TB_REPO" -- --quiet 2>/dev/null \
-    && ok "monorepo teambrain clonado" \
-    || fail "no pude clonar ${TEAMBRAIN_ORG:-aiuda}/teambrain — ¿tienes acceso write?"
+  gh repo clone "${TEAMBRAIN_ORG:-aiudalabs}/teambrain" "$TB_REPO" -- --quiet 2>/dev/null \
+    && ok "teambrain monorepo cloned" \
+    || fail "could not clone ${TEAMBRAIN_ORG:-aiudalabs}/teambrain — do you have write access?"
 else
-  ok "monorepo teambrain ya clonado"
+  ok "teambrain monorepo already cloned"
 fi
 
-# Hook global de Claude Code (los repos de producto traen el suyo committeado;
-# esto cubre repos que aún no lo tengan)
+# Global Claude Code hook (product repos ship their own committed copy;
+# this covers repos that don't have it yet)
 if command -v claude >/dev/null; then
   CS="$HOME/.claude/settings.json"; mkdir -p "$HOME/.claude"
   if [ -f "$CS" ] && command -v jq >/dev/null; then
     if ! grep -q teambrain-digest "$CS" 2>/dev/null; then
       jq -s '.[0] * .[1]' "$CS" "$KIT_DIR/kit/claude/settings.json" > "$CS.tmp" && mv "$CS.tmp" "$CS" \
-        && ok "hook SessionEnd agregado a ~/.claude/settings.json" \
-        || warn "no pude mergear ~/.claude/settings.json — agrega el hook a mano (kit/claude/settings.json)"
-    else ok "hook de Claude Code ya presente"; fi
+        && ok "SessionStart/SessionEnd hooks added to ~/.claude/settings.json" \
+        || warn "could not merge ~/.claude/settings.json — add the hook manually (kit/claude/settings.json)"
+    else ok "Claude Code hook already present"; fi
   else
     jq 'del(.["$comment"])' "$KIT_DIR/kit/claude/settings.json" > "$CS" 2>/dev/null || cp "$KIT_DIR/kit/claude/settings.json" "$CS"
-    ok "hook SessionEnd creado en ~/.claude/settings.json"
+    ok "hooks created in ~/.claude/settings.json"
   fi
 fi
-# Copilot CLI: el hook viaja en cada repo (.github/hooks/teambrain.json) — nada que instalar aquí.
+# Copilot CLI: hooks ship inside each repo (.github/hooks/teambrain.json) — nothing to install here.
 
 # ---------- Doctor ----------
 echo ""
 echo "Doctor:"
 cd "$TB_REPO" 2>/dev/null && git push --dry-run --quiet origin main 2>/dev/null \
-  && ok "acceso de escritura a teambrain verificado" \
-  || warn "no pude verificar push a teambrain (¿permisos del repo?)"
+  && ok "write access to teambrain verified" \
+  || warn "could not verify push to teambrain (repo permissions?)"
 echo '{"cwd":"'"$TB_REPO"'","reason":"complete","sessionId":"doctor-test"}' \
-  | "$TB_HOME/bin/teambrain-digest.sh" && ok "digest de prueba ejecutado (mira raw/sessions/ en unos segundos)"
+  | "$TB_HOME/bin/teambrain-digest.sh" && ok "test digest executed (check raw/sessions/ in a few seconds)"
 
 echo ""
-printf "${G}Listo. Trabaja normal — TeamBrain aprende solo.${N}\n"
-echo "Log local: ~/.teambrain/digest.log · Para desinstalar: rm -rf ~/.teambrain"
+printf "${G}Done. Work as usual — TeamBrain learns on its own.${N}\n"
+echo "Local log: ~/.teambrain/digest.log · Uninstall: rm -rf ~/.teambrain"

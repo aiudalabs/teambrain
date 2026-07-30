@@ -1,56 +1,81 @@
-# 🧠 TeamBrain — Kit de instalación
+# 🧠 TeamBrain
 
-Memoria colectiva del equipo. A partir de hoy, lo que cada uno aprende trabajando
-con su agente (Copilot CLI, Claude Code, opencode) queda registrado y disponible
-para todos — sin cambiar tu forma de trabajar.
+Collective memory for the team. From today on, what each of us learns while
+working with our agent (Copilot CLI, Claude Code, opencode) gets captured and
+becomes available to everyone — without changing how you work.
 
-## Qué hace (y qué NO hace)
+## What it does (and does NOT do)
 
-**Hace:** al cerrar cada sesión de tu agente, un hook genera un *digest* — solo
-decisiones, bugs resueltos y aprendizajes — y lo empuja a `raw/sessions/` del
-monorepo `teambrain`, firmado con tu identidad git. Si la sesión no produjo nada
-valioso, no se guarda nada. Si no hay red, queda en cola local y se envía después.
+**Does:** when you close an agent session, a hook generates a *digest* — only
+decisions, resolved bugs, and learnings — and pushes it to `raw/sessions/` in
+the `teambrain` monorepo, signed with your git identity. If the session produced
+nothing valuable, nothing is stored. If you're offline, it queues locally and
+retries on your next session.
 
-**NO hace:** no sube transcripts completos, no sube tu código, no registra tus
-prompts. El digest pasa por redacción automática de secretos antes de salir de tu
-máquina. Todo lo que se envía es legible por ti en `~/.teambrain/outbox` y en el
-repo. Desinstalar = `rm -rf ~/.teambrain`.
+**Does NOT:** it does not upload full transcripts, your code, or your prompts.
+The digest goes through automatic secret redaction before leaving your machine.
+Everything sent is readable by you in `~/.teambrain/outbox` and in the repo.
+Uninstall = `rm -rf ~/.teambrain`.
 
-## Instalación (cada dev, ~2 minutos)
+## Install (each dev, ~2 minutes)
 
 ```bash
 gh repo clone aiudalabs/teambrain ~/.teambrain/repo
 bash ~/.teambrain/repo/setup.sh
 ```
 
-El instalador detecta qué CLIs tienes, instala el motor de digest, agrega el hook
-de Claude Code si aplica, y corre un digest de prueba. Verás ✓ en cada paso.
+The installer detects which CLIs you have, installs the digest engine, adds the
+Claude Code hook if applicable, and runs a test digest. You'll see ✓ per step.
 
-**Copilot CLI no necesita nada extra:** el hook viaja committeado en cada repo de
-producto (`.github/hooks/teambrain.json`) y se activa solo al confirmar la
-confianza de la carpeta la primera vez que abras `copilot` ahí.
+**Copilot CLI needs nothing extra:** the hook ships committed inside each
+product repo (`.github/hooks/teambrain.json`) and activates when you confirm
+folder trust the first time you open `copilot` there.
 
-## Preparación previa (Noel, una vez)
+## Staying in sync (pull)
 
-1. Crear el repo `aiuda/teambrain` y correr `bootstrap-repo.sh` dentro.
-2. Dar acceso *write* al equipo.
-3. Commitear en cada repo de producto:
+Pushes are automatic (the sessionEnd hook). Pulls are too: a `sessionStart`
+hook refreshes your local clone (`~/.teambrain/repo`) in the background every
+time you open a session, so the team's knowledge is always current on your
+machine. You can also pull manually anytime: `git -C ~/.teambrain/repo pull`.
+
+## One-time setup (repo owner)
+
+1. Create the `aiudalabs/teambrain` repo and run `bootstrap-repo.sh` inside it.
+2. Grant *write* access to the team.
+3. Commit into each product repo:
    - `.github/hooks/teambrain.json` ← `kit/copilot/teambrain.json`
-   - `.claude/settings.json` ← `kit/claude/settings.json` (repos donde se use Claude Code)
+   - `.claude/settings.json` ← `kit/claude/settings.json` (repos where Claude Code is used)
+   - `.github/workflows/teambrain.yml` ← the 12-line caller (top of `.github/workflows/resumidor.yml`)
+4. Org secrets: `COPILOT_CLI_TOKEN`, `TB_APP_ID`, `TB_APP_PRIVATE_KEY`.
+5. Branch protection on `main` (require PR + CODEOWNERS review).
 
-## Qué van a notar
+## What you'll notice
 
-- Nada, al principio. Trabajan igual que siempre.
-- En unos días: `raw/sessions/` acumulando digests de todo el equipo.
-- Después (fase 2): sus agentes consultarán ese conocimiento automáticamente
-  antes de cada tarea — "esto ya lo resolvió María la semana pasada" — vía el
-  protocolo en AGENTS.md y el MCP server de teambrain.
+- Nothing, at first. You work exactly as before.
+- Within days: `raw/sessions/` and `raw/github/` accumulating digests from the
+  whole team, and the Librarian opening knowledge PRs against `wiki/`.
+- Later (phase 2): your agents will consult this knowledge automatically before
+  each task — "María already solved this last week" — via the AGENTS.md
+  protocol and the teambrain MCP server.
 
-## Problemas comunes
+## Repo layout
 
-| Síntoma | Fix |
+```
+teambrain/
+├── raw/          # immutable sources: session digests, PR/issue digests
+├── wiki/         # curated knowledge (agents write here via PR only)
+├── CLAUDE.md     # the schema — page types, frontmatter contract, rules
+├── .teambrain/prompts/   # versioned agent prompts (Summarizer, Librarian)
+├── .github/workflows/    # summarizer (reusable) + ingestor
+├── .github/hooks/        # Copilot CLI sessionStart/sessionEnd hooks
+└── kit/ + setup.sh       # per-dev installer
+```
+
+## Troubleshooting
+
+| Symptom | Fix |
 |---|---|
-| `gh CLI no autenticado` | `gh auth login` |
-| `no pude clonar teambrain` | Pedir acceso write al repo |
-| No aparecen digests | Revisar `~/.teambrain/digest.log`; verificar `jq` instalado |
-| Digest quedó en outbox | Sin red o sin permisos — se reintenta en la próxima sesión |
+| `gh CLI not authenticated` | `gh auth login` |
+| `could not clone teambrain` | Ask for write access to the repo |
+| No digests appearing | Check `~/.teambrain/digest.log`; verify `jq` is installed |
+| Digest stuck in outbox | Offline or no permissions — retries next session |

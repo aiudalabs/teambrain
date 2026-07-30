@@ -1,6 +1,13 @@
 {
   "version": 1,
   "hooks": {
+    "sessionStart": [
+      {
+        "name": "teambrain-sync",
+        "bash": "[ -d \"$HOME/.teambrain/repo/.git\" ] && (git -C \"$HOME/.teambrain/repo\" pull --rebase --quiet origin main >/dev/null 2>&1 &) || true",
+        "powershell": "if (Test-Path \"$env:USERPROFILE\\.teambrain\\repo\\.git\") { Start-Process -NoNewWindow git -ArgumentList '-C',\"$env:USERPROFILE/.teambrain/repo\",'pull','--rebase','--quiet' }"
+      }
+    ],
     "sessionEnd": [
       {
         "name": "teambrain-digest",

@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
-# teambrain-digest.sh — captura el aprendizaje de una sesión de agente y lo
-# empuja a raw/sessions/ del monorepo teambrain.
+# teambrain-digest.sh — captures the learnings of an agent session and pushes
+# them to raw/sessions/ in the teambrain monorepo.
 #
-# Invocado por hooks de sessionEnd (Copilot CLI y Claude Code). Recibe el
-# payload JSON del hook por stdin. Degradación elegante:
-#   1) digest LLM vía el CLI del propio dev (copilot -p / claude -p)
-#   2) si no hay CLI o falla → marcador estructurado (repo, branch, diffstat)
-#   3) si no hay red → cola local en ~/.teambrain/outbox, se reintenta luego
+# Invoked by sessionEnd hooks (Copilot CLI and Claude Code). Receives the hook's
+# JSON payload on stdin. Graceful degradation:
+#   1) LLM digest via the dev's own CLI (copilot -p / claude -p)
+#   2) no CLI or it fails → structured marker (repo, branch, diffstat)
+#   3) no network → local queue in ~/.teambrain/outbox, retried later
 #
-# Filosofía: NUNCA bloquear ni romper la sesión del dev. Ante cualquier duda,
-# fallar en silencio y dejar rastro en ~/.teambrain/digest.log.
+# Philosophy: NEVER block or break the dev's session. When in doubt, fail
+# silently and leave a trace in ~/.teambrain/digest.log.
 
 set -u
 TB_HOME="${TEAMBRAIN_HOME:-$HOME/.teambrain}"
@@ -20,10 +20,10 @@ mkdir -p "$TB_OUTBOX" 2>/dev/null || exit 0
 
 log() { printf '%s %s\n' "$(date -u +%FT%TZ)" "$*" >> "$TB_LOG" 2>/dev/null; }
 
-# ---------- 1. Leer payload del hook (stdin JSON) ----------
+# ---------- 1. Read hook payload (stdin JSON) ----------
 PAYLOAD="$(cat 2>/dev/null || true)"
 jqget() { printf '%s' "$PAYLOAD" | (command -v jq >/dev/null && jq -r "$1 // empty") 2>/dev/null; }
-# Fallback sin jq: extracción básica por regex
+# No-jq fallback: basic regex extraction
 rawget() { printf '%s' "$PAYLOAD" | sed -n 's/.*"'"$1"'"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -1; }
 
 SESSION_ID="$(jqget '.sessionId')"; [ -z "$SESSION_ID" ] && SESSION_ID="$(jqget '.session_id')"
@@ -32,10 +32,10 @@ CWD="$(jqget '.cwd')"; [ -z "$CWD" ] && CWD="$(rawget cwd)"; [ -z "$CWD" ] && CW
 REASON="$(jqget '.reason')"; [ -z "$REASON" ] && REASON="$(rawget reason)"; [ -z "$REASON" ] && REASON="complete"
 TRANSCRIPT="$(jqget '.transcript_path')"; [ -z "$TRANSCRIPT" ] && TRANSCRIPT="$(rawget transcript_path)"
 
-# Sesiones abortadas o con error no suelen dejar aprendizaje confiable
+# Aborted/timed-out sessions rarely leave reliable learnings
 case "$REASON" in abort|timeout) log "skip reason=$REASON"; exit 0;; esac
 
-# ---------- 2. Contexto git del proyecto ----------
+# ---------- 2. Project git context ----------
 cd "$CWD" 2>/dev/null || exit 0
 REPO_NAME="$(basename "$(git rev-parse --show-toplevel 2>/dev/null || echo "$CWD")")"
 BRANCH="$(git branch --show-current 2>/dev/null || echo '-')"
@@ -43,63 +43,63 @@ DEV="$(git config user.name 2>/dev/null || whoami)"
 DIFFSTAT="$(git diff --stat HEAD 2>/dev/null | tail -5)"
 STAMP="$(date -u +%Y-%m-%d)"; TS="$(date -u +%H%M%S)"
 
-# ---------- 3. Generar el digest ----------
-PROMPT='Acabas de terminar una sesión de trabajo en este repositorio. Resume SOLO el conocimiento durable que un compañero de equipo debería heredar, en markdown y en español:
-## Decisiones (qué se decidió y por qué)
-## Bugs resueltos (síntoma → causa → fix)
-## Aprendizajes (cosas no-obvias descubiertas)
-Reglas: máximo 25 líneas; sin código extenso; sin secretos, tokens ni credenciales; si la sesión NO produjo nada de estas categorías (solo formateo, exploración trivial), responde exactamente: SKIP'
+# ---------- 3. Generate the digest ----------
+PROMPT='You just finished a work session in this repository. Summarize ONLY the durable knowledge a teammate should inherit, in markdown, in English:
+## Decisions (what was decided and why)
+## Resolved bugs (symptom → cause → fix)
+## Learnings (non-obvious things discovered)
+Rules: max 25 lines; no long code; no secrets, tokens or credentials; if the session produced NOTHING in these categories (formatting only, trivial exploration), respond exactly: SKIP'
 
 DIGEST=""
 if [ -n "$TRANSCRIPT" ] && [ -f "$TRANSCRIPT" ] && command -v claude >/dev/null 2>&1; then
-  # Claude Code: tenemos el transcript — digest de máxima calidad
-  DIGEST="$(tail -c 200000 "$TRANSCRIPT" | claude -p "$PROMPT (basado en el transcript en stdin)" 2>/dev/null)"
+  # Claude Code: we have the transcript — highest quality digest
+  DIGEST="$(tail -c 200000 "$TRANSCRIPT" | claude -p "$PROMPT (based on the transcript on stdin)" 2>/dev/null)"
 elif command -v copilot >/dev/null 2>&1 && [ -n "$SESSION_ID" ]; then
-  # Copilot CLI: intentar resumir reanudando la sesión en modo programático
+  # Copilot CLI: try summarizing by resuming the session in programmatic mode
   DIGEST="$(copilot --resume "$SESSION_ID" -p "$PROMPT" --allow-tool 'shell(git log)' 2>/dev/null)"
 fi
 
-# Fallback: marcador estructurado (siempre funciona, cero dependencias)
+# Fallback: structured marker (always works, zero dependencies)
 if [ -z "$DIGEST" ]; then
-  DIGEST="_(marcador automático — sin digest LLM disponible)_
+  DIGEST="_(automatic marker — no LLM digest available)_
 
-Archivos tocados:
+Files touched:
 \`\`\`
-${DIFFSTAT:-"(sin cambios sin commitear)"}
+${DIFFSTAT:-"(no uncommitted changes)"}
 \`\`\`"
 fi
 
-# Sesión sin valor → no ensuciar raw/
-printf '%s' "$DIGEST" | grep -qx 'SKIP' && { log "skip sin-valor repo=$REPO_NAME"; exit 0; }
+# Worthless session → don't pollute raw/
+printf '%s' "$DIGEST" | grep -qx 'SKIP' && { log "skip no-value repo=$REPO_NAME"; exit 0; }
 
-# ---------- 4. Redacción básica de secretos ----------
+# ---------- 4. Basic secret redaction ----------
 DIGEST="$(printf '%s' "$DIGEST" | sed -E \
-  -e 's/(gh[pousr]_[A-Za-z0-9]{20,})/[REDACTADO]/g' \
-  -e 's/(AKIA[A-Z0-9]{12,})/[REDACTADO]/g' \
-  -e 's/(sk-[A-Za-z0-9_-]{20,})/[REDACTADO]/g' \
-  -e 's/(-----BEGIN [A-Z ]+PRIVATE KEY-----)/[REDACTADO]/g' \
-  -e 's/((api[_-]?key|token|password|secret)[[:space:]]*[=:][[:space:]]*)[^[:space:]]+/\1[REDACTADO]/Ig')"
+  -e 's/(gh[pousr]_[A-Za-z0-9]{20,})/[REDACTED]/g' \
+  -e 's/(AKIA[A-Z0-9]{12,})/[REDACTED]/g' \
+  -e 's/(sk-[A-Za-z0-9_-]{20,})/[REDACTED]/g' \
+  -e 's/(-----BEGIN [A-Z ]+PRIVATE KEY-----)/[REDACTED]/g' \
+  -e 's/((api[_-]?key|token|password|secret)[[:space:]]*[=:][[:space:]]*)[^[:space:]]+/\1[REDACTED]/Ig')"
 
-# ---------- 5. Escribir el archivo de digest ----------
+# ---------- 5. Write the digest file ----------
 FNAME="${STAMP}-$(echo "$DEV" | tr 'A-Z ' 'a-z-')-${REPO_NAME}-${TS}.md"
 TMP="$TB_OUTBOX/$FNAME"
 cat > "$TMP" <<EOF
 ---
-tipo: session-digest
+type: session-digest
 dev: $DEV
 repo: $REPO_NAME
 branch: $BRANCH
-fecha: ${STAMP}T${TS}Z
-sesion: ${SESSION_ID:-manual}
-motivo_cierre: $REASON
+date: ${STAMP}T${TS}Z
+session: ${SESSION_ID:-manual}
+close_reason: $REASON
 ---
 
 $DIGEST
 EOF
 
-# ---------- 6. Push a teambrain (con outbox como red de seguridad) ----------
+# ---------- 6. Push to teambrain (outbox as safety net) ----------
 push_outbox() {
-  [ -d "$TB_REPO/.git" ] || { log "repo teambrain no clonado; queda en outbox"; return 1; }
+  [ -d "$TB_REPO/.git" ] || { log "teambrain repo not cloned; kept in outbox"; return 1; }
   cd "$TB_REPO" || return 1
   git pull --rebase --quiet origin main 2>/dev/null || return 1
   mkdir -p raw/sessions
@@ -110,12 +110,12 @@ push_outbox() {
   done
   [ "$n" -eq 0 ] && return 0
   git add raw/sessions && \
-  git commit --quiet -m "digest: $n sesión(es) de $DEV" 2>/dev/null && \
+  git commit --quiet -m "digest: $n session(s) from $DEV" 2>/dev/null && \
   git push --quiet origin main 2>/dev/null || return 1
   log "push ok ($n digests)"
 }
 
-# En background para no retrasar el cierre de la sesión del dev
-( push_outbox || log "push falló; $(ls "$TB_OUTBOX" | wc -l | tr -d ' ') pendientes en outbox" ) >/dev/null 2>&1 &
+# Run in background so the dev's session close isn't delayed
+( push_outbox || log "push failed; $(ls "$TB_OUTBOX" | wc -l | tr -d ' ') pending in outbox" ) >/dev/null 2>&1 &
 disown 2>/dev/null || true
 exit 0

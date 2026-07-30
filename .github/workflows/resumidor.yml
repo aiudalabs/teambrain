@@ -1,15 +1,14 @@
 # teambrain/.github/workflows/resumidor.yml
-# Workflow REUSABLE — vive en teambrain, lo llaman los repos de producto.
+# REUSABLE workflow — lives in teambrain, called by product repos.
 #
-# Secrets requeridos (a nivel de ORG, se configuran una vez):
-#   COPILOT_CLI_TOKEN   PAT (fine-grained) de una cuenta con licencia Copilot,
-#                       para autenticar copilot CLI en Actions.
-#                       ⚠ VERIFICAR: nombre exacto de la env var con
-#                       `copilot help environment` (ver nota al pie).
-#   TB_APP_ID / TB_APP_PRIVATE_KEY   GitHub App "teambrain[bot]" con
-#                       contents:write SOLO en el repo teambrain.
+# Required secrets (ORG level, configured once):
+#   COPILOT_CLI_TOKEN   Fine-grained PAT from an account with a Copilot license,
+#                       to authenticate copilot CLI in Actions.
+#                       ⚠ VERIFY: exact env var name via `copilot help environment`.
+#   TB_APP_ID / TB_APP_PRIVATE_KEY   GitHub App "teambrain[bot]" with
+#                       contents:write ONLY on the teambrain repo.
 #
-# Caller en cada repo de producto (.github/workflows/teambrain.yml):
+# Caller in each product repo (.github/workflows/teambrain.yml):
 #   name: teambrain
 #   on:
 #     pull_request: { types: [closed] }
@@ -26,7 +25,7 @@ on:
 
 permissions:
   contents: read
-  pull-requests: write   # para el comment "🧠 aprendí…"
+  pull-requests: write   # for the "🧠 learned…" transparency comment
   issues: write
 
 jobs:
@@ -34,7 +33,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - name: Contexto del PR/issue
+      - name: PR/issue context
         id: ctx
         env:
           GH_TOKEN: ${{ github.token }}
@@ -54,16 +53,16 @@ jobs:
             echo "kind=issue" >> "$GITHUB_OUTPUT"; echo "num=$N" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Traer prompt canónico desde teambrain
+      - name: Fetch canonical prompt from teambrain
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh api repos/aiudalabs/teambrain/contents/.teambrain/prompts/resumidor.md \
             --jq .content | base64 -d > prompt.md
 
-      - name: Generar digest con Copilot CLI
+      - name: Generate digest with Copilot CLI
         env:
-          # ⚠ VERIFICAR nombre de variable con: copilot help environment
+          # ⚠ VERIFY env var name via: copilot help environment
           GH_TOKEN: ${{ secrets.COPILOT_CLI_TOKEN }}
         run: |
           npm install -g @github/copilot >/dev/null 2>&1
@@ -72,13 +71,13 @@ jobs:
                 -e "s/{{NUMERO}}/${{ steps.ctx.outputs.num }}/" \
                 -e "s/{{ACTOR}}/${{ github.actor }}/" \
                 -e "s/{{FECHA}}/$(date -u +%F)/" prompt.md
-            echo; echo "## CONTEXTO"; cat ctx.json; echo; echo "## DIFF"; cat diff.txt
+            echo; echo "## CONTEXT"; cat ctx.json; echo; echo "## DIFF"; cat diff.txt
           } > full-prompt.txt
           copilot -p "$(cat full-prompt.txt)" -s > digest.md || true
           grep -qx 'SKIP' digest.md && { echo "skip=true" >> "$GITHUB_ENV"; exit 0; } || true
           [ -s digest.md ] || echo "skip=true" >> "$GITHUB_ENV"
 
-      - name: Token de la App teambrain[bot]
+      - name: teambrain[bot] App token
         if: env.skip != 'true'
         id: app
         uses: actions/create-github-app-token@v1
@@ -88,7 +87,7 @@ jobs:
           owner: aiudalabs
           repositories: teambrain
 
-      - name: Commitear digest a teambrain/raw
+      - name: Commit digest to teambrain/raw
         if: env.skip != 'true'
         env:
           GH_TOKEN: ${{ steps.app.outputs.token }}
@@ -102,13 +101,13 @@ jobs:
           git config user.name "teambrain[bot]"
           git config user.email "teambrain[bot]@users.noreply.github.com"
           git add -A
-          git commit -m "digest: $REPO_SHORT#${{ steps.ctx.outputs.num }} por @${{ github.actor }}"
+          git commit -m "digest: $REPO_SHORT#${{ steps.ctx.outputs.num }} by @${{ github.actor }}"
           git push
 
-      - name: Comment de transparencia en el origen
+      - name: Transparency comment on the source PR
         if: env.skip != 'true' && steps.ctx.outputs.kind == 'pr'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh pr comment ${{ steps.ctx.outputs.num }} --repo "$GITHUB_REPOSITORY" \
-            --body "🧠 TeamBrain aprendió de este PR — digest en \`raw/github/${GITHUB_REPOSITORY#*/}/\`"
+            --body "🧠 TeamBrain learned from this PR — digest at \`raw/github/${GITHUB_REPOSITORY#*/}/\`"

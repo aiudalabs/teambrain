@@ -1,18 +1,18 @@
 # TeamBrain — Schema (v0)
 
-Wiki de conocimiento del equipo. Reglas para todo agente que escriba aquí:
+Team knowledge wiki. Rules for every agent that writes here:
 
-## Tipos de página (frontmatter `type`)
-playbook · decision (exige rationale + reversal_condition) · postmortem ·
-synthesis · entity · reference (exige review_by) · contradiction (solo el linter las crea)
+## Page types (frontmatter `type`)
+playbook · decision (requires rationale + reversal_condition) · postmortem ·
+synthesis · entity · reference (requires review_by) · contradiction (only the linter creates these)
 
-## Frontmatter obligatorio
-id, type, project, status, confidence, sources (rutas a raw/), contributors,
+## Required frontmatter
+id, type, project, status, confidence, sources (paths into raw/), contributors,
 created, updated, review_by, links
 
-## Reglas
-- raw/ es inmutable y append-only. wiki/ solo se toca vía PR.
-- Comprimir, no espejar: una página existe solo si sintetiza ≥2 fuentes o
-  conocimiento no-greppeable. Máx ~600 palabras.
-- Toda página enlaza y es enlazada ([[wikilinks]]).
-- Toda afirmación es trazable a una fuente en raw/.
+## Rules
+- raw/ is immutable and append-only. wiki/ is only ever modified via PR.
+- Compress, don't mirror: a page exists only if it synthesizes ≥2 sources or
+  captures non-greppable knowledge. Max ~600 words.
+- Every page links and is linked ([[wikilinks]]).
+- Every claim is traceable to a source in raw/.

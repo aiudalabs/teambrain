@@ -1,2 +1,2 @@
-# Bitácora de operaciones
+# Operations log
 

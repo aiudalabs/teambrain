@@ -1,6 +1,16 @@
 {
-  "$comment": "Snippet para .claude/settings.json del repo (o ~/.claude/settings.json del dev). Mismo motor de digest que Copilot CLI.",
+  "$comment": "Snippet for the repo's .claude/settings.json (or the dev's ~/.claude/settings.json). Same digest engine as Copilot CLI, plus background sync on session start.",
   "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "[ -d \"$HOME/.teambrain/repo/.git\" ] && (git -C \"$HOME/.teambrain/repo\" pull --rebase --quiet origin main >/dev/null 2>&1 &) || true"
+          }
+        ]
+      }
+    ],
     "SessionEnd": [
       {
         "hooks": [
